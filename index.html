@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Risque de Givre</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f0f0;
+        text-align: center;
+      }
+      h1 {
+        margin-top: 20px;
+        font-size: 28px;
+      }
+      #result {
+        margin: 20px;
+        padding: 20px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      .chart-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 20px;
+        max-width: 90%;
+        width: 90%;
+        margin: 0 auto;
+        padding: 10px;
+      }
+      .chart-container canvas {
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 300px;
+        display: block;
+      }
+      #message {
+        font-size: 18px;
+        color: #333;
+      }
+      .credits {
+        font-size: 12px; /* Police très petite */
+        color: #666; /* Couleur gris clair pour moins d'impact visuel */
+        margin: 5px 0 0 0; /* Petite marge pour l'espacement */
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 id="mainTitle">Faut-il couvrir les voitures ?</h1>
+      <p class="credits">Conçu par Jérôme KIPPERT et propulsé par l'IA !</p>
+      <section id="result">
+        <p id="message">Analyse du risque de givre en cours...</p>
+      </section>
+      <section class="chart-container">
+        <canvas id="tempChart"></canvas>
+        <canvas id="humidityChart"></canvas>
+        <canvas id="windChart"></canvas>
+        <canvas id="cloudChart"></canvas>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
