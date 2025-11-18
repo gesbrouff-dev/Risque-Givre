@@ -24,6 +24,48 @@
         border-radius: 8px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       }
+      
+      /* Styles pour la section 5 jours */
+      #fiveDayForecast { 
+        margin: 20px auto; 
+        padding: 15px; 
+        background-color: rgba(255,255,255,0.9); 
+        border-radius: 8px; 
+        max-width: 600px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      #fiveDayForecast h3 { 
+        text-align: center; 
+        margin-bottom: 15px; 
+        color: #333;
+        font-size: 20px;
+      }
+      .day-forecast { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        padding: 10px; 
+        margin-bottom: 8px; 
+        border-radius: 5px; 
+        background-color: #f9f9f9;
+      }
+      .day-name { 
+        font-weight: bold; 
+        min-width: 120px;
+        text-align: left;
+      }
+      .risk-indicator { 
+        font-size: 24px; 
+        min-width: 50px; 
+        text-align: center;
+      }
+      .risk-text { 
+        flex-grow: 1; 
+        text-align: right;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      
       .chart-container {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
