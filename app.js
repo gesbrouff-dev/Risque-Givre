@@ -327,6 +327,8 @@ function processMetNoWeatherData(data, cityName) {
 }
 
 // Nouvelle fonction : Prévisions sur 5 jours
+console.log("displayFiveDayForecast appelée");
+console.log("Nombre de données:", data.properties.timeseries.length);
 function displayFiveDayForecast(data) {
   const fiveDayContainer = document.getElementById("fiveDayForecast");
   if (!fiveDayContainer) return;
