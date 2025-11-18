@@ -85,6 +85,44 @@ function addConfigButton() {
     .input-group select, .input-grid input { width: 100%; padding: 5px; box-sizing: border-box; }
     .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     #saveConfig { width: 100%; padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 15px; }
+    
+    /* Styles pour la section 5 jours */
+    #fiveDayForecast { 
+      margin: 20px auto; 
+      padding: 15px; 
+      background-color: rgba(255,255,255,0.8); 
+      border-radius: 8px; 
+      max-width: 600px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    #fiveDayForecast h3 { 
+      text-align: center; 
+      margin-bottom: 15px; 
+      color: #333;
+    }
+    .day-forecast { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      padding: 10px; 
+      margin-bottom: 8px; 
+      border-radius: 5px; 
+      background-color: #f9f9f9;
+    }
+    .day-name { 
+      font-weight: bold; 
+      min-width: 100px;
+    }
+    .risk-indicator { 
+      font-size: 24px; 
+      min-width: 40px; 
+      text-align: center;
+    }
+    .risk-text { 
+      flex-grow: 1; 
+      text-align: right;
+      font-size: 14px;
+    }
   `;
   document.head.appendChild(style);
 
@@ -255,7 +293,7 @@ function processMetNoWeatherData(data, cityName) {
       return (
         itemDate.getDate() === tomorrow.getDate() &&
         itemDate.getHours() >= 2 &&
-        itemDate.getHours() <= 8 // Modifié de 7 à 8
+        itemDate.getHours() <= 8
       );
     })
     .sort((a, b) => new Date(a.time) - new Date(b.time));
@@ -283,6 +321,134 @@ function processMetNoWeatherData(data, cityName) {
 
   updateUI(forecastAt6h, formattedDate, riskAssessment, cityName, target6am);
   drawCharts(forecast);
+  
+  // Nouvelle fonctionnalité : prévisions 5 jours
+  displayFiveDayForecast(data);
+}
+
+// Nouvelle fonction : Prévisions sur 5 jours
+function displayFiveDayForecast(data) {
+  const fiveDayContainer = document.getElementById("fiveDayForecast");
+  if (!fiveDayContainer) return;
+
+  let forecastHTML = '<h3>📅 Risque de givre - 5 prochains jours</h3>';
+
+  for (let dayOffset = 1; dayOffset <= 5; dayOffset++) {
+    const targetDay = new Date();
+    targetDay.setDate(targetDay.getDate() + dayOffset);
+    targetDay.setHours(0, 0, 0, 0);
+
+    // Filtrer les données pour ce jour entre 2h et 8h
+    const dayForecast = data.properties.timeseries.filter((item) => {
+      const itemDate = new Date(item.time);
+      return (
+        itemDate.getDate() === targetDay.getDate() &&
+        itemDate.getMonth() === targetDay.getMonth() &&
+        itemDate.getHours() >= 2 &&
+        itemDate.getHours() <= 8
+      );
+    });
+
+    if (dayForecast.length === 0) continue;
+
+    // Évaluer le risque pour ce jour
+    const riskLevel = evaluateDayRisk(dayForecast);
+    const dayName = targetDay.toLocaleDateString("fr-FR", {
+      weekday: "long",
+      day: "numeric",
+      month: "short",
+    });
+
+    let icon = "🌞";
+    let riskText = "Pas de risque";
+    let bgColor = "#f0f8f0";
+
+    if (riskLevel === 1) {
+      icon = "❄️";
+      riskText = "Risque potentiel";
+      bgColor = "#e6f2ff";
+    } else if (riskLevel === 2) {
+      icon = "⚠️❄️";
+      riskText = "Risque important";
+      bgColor = "#fff0e6";
+    } else if (riskLevel === 3) {
+      icon = "⚠️❄️❄️";
+      riskText = "Risque très élevé";
+      bgColor = "#ffe6e6";
+    }
+
+    forecastHTML += `
+      <div class="day-forecast" style="background-color: ${bgColor};">
+        <span class="day-name">${dayName}</span>
+        <span class="risk-indicator">${icon}</span>
+        <span class="risk-text">${riskText}</span>
+      </div>
+    `;
+  }
+
+  fiveDayContainer.innerHTML = forecastHTML;
+}
+
+// Fonction auxiliaire pour évaluer le risque d'un jour
+function evaluateDayRisk(forecast) {
+  let maxRiskLevel = 0;
+
+  const tempAdjustment = CONFIG.localEnvironment.enabled
+    ? CONFIG.localEnvironment.tempAdjustment
+    : 0;
+  const humidityAdjustment = CONFIG.localEnvironment.enabled
+    ? CONFIG.localEnvironment.humidityAdjustment
+    : 0;
+
+  forecast.forEach((item) => {
+    const data = item.data.instant.details;
+    const adjustedTemp = data.air_temperature + tempAdjustment;
+    const adjustedHumidity = Math.min(
+      100,
+      data.relative_humidity + humidityAdjustment
+    );
+    const windSpeed = data.wind_speed * 3.6;
+
+    // Calcul du point de rosée
+    const b = 17.27;
+    const c = 237.7;
+    const alpha =
+      (b * adjustedTemp) / (c + adjustedTemp) +
+      Math.log(adjustedHumidity / 100);
+    const dewPoint = (c * alpha) / (b - alpha);
+
+    let cloudCoverage =
+      item.data.next_1_hours?.details?.cloud_area_fraction ??
+      data.cloud_area_fraction;
+
+    // Niveau 3 : Risque très élevé
+    if (
+      adjustedTemp <= 0 &&
+      dewPoint >= adjustedTemp - 1 &&
+      (cloudCoverage === undefined || cloudCoverage < 30)
+    ) {
+      maxRiskLevel = 3;
+    }
+    // Niveau 2 : Risque important
+    else if (
+      adjustedTemp <= 1 &&
+      dewPoint >= adjustedTemp - 2 &&
+      (cloudCoverage === undefined || cloudCoverage < 50)
+    ) {
+      maxRiskLevel = Math.max(maxRiskLevel, 2);
+    }
+    // Niveau 1 : Risque potentiel
+    else if (
+      adjustedTemp <= 2.5 &&
+      dewPoint >= adjustedTemp - 2 &&
+      windSpeed <= 10 &&
+      (cloudCoverage === undefined || cloudCoverage < 70)
+    ) {
+      maxRiskLevel = Math.max(maxRiskLevel, 1);
+    }
+  });
+
+  return maxRiskLevel;
 }
 
 // Évaluation du risque de givre avec point de rosée et couverture nuageuse
@@ -408,7 +574,7 @@ function assessFrostRisk(forecast, cityName) {
   return { message: riskMessage, backgroundColor: bgColor };
 }
 
-// Mise à jour de l’interface
+// Mise à jour de l'interface
 function updateUI(
   forecast,
   formattedDate,
@@ -525,11 +691,11 @@ function drawCharts(weatherData) {
               display: true,
               text: chart.title,
               font: {
-                size: 22, // Augmente la taille ici (essaie 18, 20, ou plus)
-                family: "Arial", // Cohérent avec ton CSS
-                weight: "bold", // Optionnel, pour plus de lisibilité
+                size: 22,
+                family: "Arial",
+                weight: "bold",
               },
-              padding: 10, // Espace autour du titre
+              padding: 10,
             },
           },
           scales: { y: { min: chart.min, max: chart.max } },
@@ -555,4 +721,4 @@ function error(err) {
       break;
   }
   messageElement.textContent = errorMessage;
-} // FIN DU PROGRAMME
+}
