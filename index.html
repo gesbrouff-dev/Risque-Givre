@@ -45,9 +45,9 @@
         color: #333;
       }
       .credits {
-        font-size: 12px; /* Police très petite */
-        color: #666; /* Couleur gris clair pour moins d'impact visuel */
-        margin: 5px 0 0 0; /* Petite marge pour l'espacement */
+        font-size: 12px;
+        color: #666;
+        margin: 5px 0 0 0;
       }
     </style>
   </head>
@@ -58,6 +58,10 @@
       <section id="result">
         <p id="message">Analyse du risque de givre en cours...</p>
       </section>
+      
+      <!-- Section pour les prévisions 5 jours -->
+      <div id="fiveDayForecast"></div>
+      
       <section class="chart-container">
         <canvas id="tempChart"></canvas>
         <canvas id="humidityChart"></canvas>
