@@ -327,18 +327,25 @@ function processMetNoWeatherData(data, cityName) {
 }
 
 // Nouvelle fonction : Prévisions sur 5 jours
-console.log("displayFiveDayForecast appelée");
-console.log("Nombre de données:", data.properties.timeseries.length);
 function displayFiveDayForecast(data) {
+  console.log("displayFiveDayForecast appelée");
+  console.log("Nombre de données:", data.properties.timeseries.length);
+  
   const fiveDayContainer = document.getElementById("fiveDayForecast");
-  if (!fiveDayContainer) return;
+  if (!fiveDayContainer) {
+    console.log("Container fiveDayForecast non trouvé!");
+    return;
+  }
 
   let forecastHTML = '<h3>📅 Risque de givre - 5 prochains jours</h3>';
+  let daysFound = 0;
 
   for (let dayOffset = 1; dayOffset <= 5; dayOffset++) {
     const targetDay = new Date();
     targetDay.setDate(targetDay.getDate() + dayOffset);
     targetDay.setHours(0, 0, 0, 0);
+
+    console.log(`Recherche jour ${dayOffset}: ${targetDay.toLocaleDateString("fr-FR")}`);
 
     // Filtrer les données pour ce jour entre 2h et 8h
     const dayForecast = data.properties.timeseries.filter((item) => {
@@ -346,12 +353,17 @@ function displayFiveDayForecast(data) {
       return (
         itemDate.getDate() === targetDay.getDate() &&
         itemDate.getMonth() === targetDay.getMonth() &&
+        itemDate.getFullYear() === targetDay.getFullYear() &&
         itemDate.getHours() >= 2 &&
         itemDate.getHours() <= 8
       );
     });
 
+    console.log(`  -> Données trouvées: ${dayForecast.length}`);
+
     if (dayForecast.length === 0) continue;
+
+    daysFound++;
 
     // Évaluer le risque pour ce jour
     const riskLevel = evaluateDayRisk(dayForecast);
@@ -386,6 +398,12 @@ function displayFiveDayForecast(data) {
         <span class="risk-text">${riskText}</span>
       </div>
     `;
+  }
+
+  console.log(`Total de jours trouvés: ${daysFound}`);
+  
+  if (daysFound === 0) {
+    forecastHTML += '<p style="color: #999; font-style: italic;">Prévisions non disponibles pour les prochains jours</p>';
   }
 
   fiveDayContainer.innerHTML = forecastHTML;
